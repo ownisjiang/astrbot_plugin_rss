@@ -1,0 +1,14 @@
+name: astrbot_plugin_rss
+author: ownisjiang
+desc: "RSS 订阅插件 - 订阅你喜欢的博客、新闻、技术文章源，支持自动检查更新并推送到聊天窗口"
+version: "1.0.0"
+display_name: "📡 RSS 订阅器"
+short_desc: "订阅 RSS 源，自动推送更新到聊天"
+repo: https://github.com/ownisjiang/astrbot_plugin_rss
+support_platforms:
+  - telegram
+  - discord
+  - aiocqhttp
+  - qq_official
+  - wechat
+astrbot_version: ">=4.16,<5"

@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "display_name": "📡 RSS 订阅器",
+    "short_desc": "订阅 RSS 源，自动推送更新到聊天",
+    "desc": "RSS 订阅插件 - 订阅你喜欢的博客、新闻、技术文章源，支持自动检查更新并推送到聊天窗口"
+  },
+  "config": {
+    "default_interval": {
+      "description": "默认检查间隔（分钟）",
+      "hint": "新订阅的 RSS 源的默认轮询间隔，范围 5-1440 分钟（1 天）"
+    },
+    "max_entries_per_push": {
+      "description": "每次推送最大条目数",
+      "hint": "每次检查时最多推送多少条新内容，避免刷屏"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "display_name": "📡 RSS Subscriber",
+    "short_desc": "Subscribe to RSS feeds and get updates pushed to chat",
+    "desc": "RSS subscription plugin - subscribe to blogs, news, and tech articles. Auto-check for updates and push new content to your chat window."
+  },
+  "config": {
+    "default_interval": {
+      "description": "Default check interval (minutes)",
+      "hint": "Default polling interval for new RSS subscriptions, range 5-1440 minutes (1 day)"
+    },
+    "max_entries_per_push": {
+      "description": "Max entries per push",
+      "hint": "Maximum number of new entries to push at once, to avoid spamming"
+    }
+  }
+}
