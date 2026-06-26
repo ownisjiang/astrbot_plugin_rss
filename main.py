@@ -81,41 +81,44 @@ class SubscriptionStore:
 
     async def add_feed(self, url: str, title: str, subtitle: str,
                        default_interval: int = 30) -> tuple[bool, str]:
-        feeds = self._data["feeds"]
-        if any(f["url"] == url for f in feeds):
-            return False, ""
+        async with self._lock:
+            feeds = self._data["feeds"]
+            if any(f["url"] == url for f in feeds):
+                return False, ""
 
-        feed_id = self._generate_id()
-        feeds.append({
-            "id": feed_id,
-            "url": url,
-            "title": title,
-            "subtitle": subtitle,
-            "interval": default_interval,
-            "last_entry_id": "",
-            "subscribers": [],
-            "added_at": datetime.now(timezone.utc).isoformat(),
-            "last_check": None,
-            "failed_count": 0,
-        })
-        await self._save()
+            feed_id = self._generate_id()
+            feeds.append({
+                "id": feed_id,
+                "url": url,
+                "title": title,
+                "subtitle": subtitle,
+                "interval": default_interval,
+                "last_entry_id": "",
+                "subscribers": [],
+                "added_at": datetime.now(timezone.utc).isoformat(),
+                "last_check": None,
+                "failed_count": 0,
+            })
+            await self._save()
         return True, feed_id
 
     async def remove_feed(self, feed_id: str) -> bool:
-        feeds = self._data["feeds"]
-        before = len(feeds)
-        self._data["feeds"] = [f for f in feeds if f["id"] != feed_id]
-        if len(self._data["feeds"]) < before:
-            await self._save()
-            return True
+        async with self._lock:
+            feeds = self._data["feeds"]
+            before = len(feeds)
+            self._data["feeds"] = [f for f in feeds if f["id"] != feed_id]
+            if len(self._data["feeds"]) < before:
+                await self._save()
+                return True
         return False
 
     async def update_feed(self, feed_id: str, **kwargs) -> bool:
-        for feed in self._data["feeds"]:
-            if feed["id"] == feed_id:
-                feed.update(kwargs)
-                await self._save()
-                return True
+        async with self._lock:
+            for feed in self._data["feeds"]:
+                if feed["id"] == feed_id:
+                    feed.update(kwargs)
+                    await self._save()
+                    return True
         return False
 
     # ── 条目去重 ──
@@ -124,10 +127,11 @@ class SubscriptionStore:
         return self._data.get("entries_seen", {})
 
     async def mark_entries_seen(self, entry_ids: list):
-        seen = self._data["entries_seen"]
-        for eid in entry_ids:
-            seen[eid] = datetime.now(timezone.utc).isoformat()
-        await self._save()
+        async with self._lock:
+            seen = self._data["entries_seen"]
+            for eid in entry_ids:
+                seen[eid] = datetime.now(timezone.utc).isoformat()
+            await self._save()
 
     # ── 订阅者管理 ──
 
@@ -135,21 +139,22 @@ class SubscriptionStore:
                              unified_origin: str,
                              platform: str,
                              sender_name: str) -> bool:
-        for feed in self._data["feeds"]:
-            if feed["url"] == feed_url:
-                existing = [
-                    s for s in feed.get("subscribers", [])
-                    if s["unified_origin"] == unified_origin
-                ]
-                if not existing:
-                    feed.setdefault("subscribers", []).append({
-                        "unified_origin": unified_origin,
-                        "platform": platform,
-                        "sender_name": sender_name,
-                    })
-                    await self._save()
-                    return True
-                return False
+        async with self._lock:
+            for feed in self._data["feeds"]:
+                if feed["url"] == feed_url:
+                    existing = [
+                        s for s in feed.get("subscribers", [])
+                        if s["unified_origin"] == unified_origin
+                    ]
+                    if not existing:
+                        feed.setdefault("subscribers", []).append({
+                            "unified_origin": unified_origin,
+                            "platform": platform,
+                            "sender_name": sender_name,
+                        })
+                        await self._save()
+                        return True
+                    return False
         return False
 
     def get_subscribers_for_feed(self, feed_url: str) -> list:
@@ -220,7 +225,7 @@ class RssPlugin(Star):
                     "例如: /rss add https://example.com/rss"
                 )
                 return
-            url = parts[2]
+            url = parts[2].strip("\"'")  # 去除可能的引号
             async for result in self._cmd_add(event, url):
                 yield result
 
@@ -335,6 +340,8 @@ class RssPlugin(Star):
             yield event.plain_result("📭 暂无订阅，使用 /rss add <url> 添加")
             return
 
+        # 只显示当前会话相关的订阅
+        my_origin = event.unified_msg_origin
         lines = ["📡 RSS 订阅列表:\n"]
         for feed in feeds:
             sub_count = len(feed.get("subscribers", []))
