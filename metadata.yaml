@@ -1,7 +1,7 @@
 name: astrbot_plugin_rss
 author: ownisjiang
 desc: 订阅 RSS/Atom 源，定时检查更新，自动推送到聊天窗口
-version: "1.0.0"
+version: "1.0"
 display_name: "📡 RSS 订阅器"
 short_desc: 订阅 RSS 源，自动检查更新并推送到聊天
 repo: https://github.com/ownisjiang/astrbot_plugin_rss

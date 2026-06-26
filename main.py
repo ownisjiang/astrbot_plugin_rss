@@ -177,7 +177,7 @@ class SubscriptionStore:
     "astrbot_plugin_rss",
     "ownisjiang",
     "RSS 订阅插件 - 订阅你喜欢的博客和新闻源",
-    "1.0.0",
+    "1.0",
 )
 class RssPlugin(Star):
     def __init__(self, context: Context, config: dict = None):
