@@ -37,6 +37,7 @@ from astrbot.api.message_components import Plain, Image
 
 # ── 持久化存储 ──────────────────────────────────────────────
 
+
 class SubscriptionStore:
     """线程安全的订阅数据存储，使用 JSON 文件持久化"""
 
@@ -79,26 +80,29 @@ class SubscriptionStore:
     def get_feeds(self) -> list:
         return self._data.get("feeds", [])
 
-    async def add_feed(self, url: str, title: str, subtitle: str,
-                       default_interval: int = 30) -> tuple[bool, str]:
+    async def add_feed(
+        self, url: str, title: str, subtitle: str, default_interval: int = 30
+    ) -> tuple[bool, str]:
         async with self._lock:
             feeds = self._data["feeds"]
             if any(f["url"] == url for f in feeds):
                 return False, ""
 
             feed_id = self._generate_id()
-            feeds.append({
-                "id": feed_id,
-                "url": url,
-                "title": title,
-                "subtitle": subtitle,
-                "interval": default_interval,
-                "last_entry_id": "",
-                "subscribers": [],
-                "added_at": datetime.now(timezone.utc).isoformat(),
-                "last_check": None,
-                "failed_count": 0,
-            })
+            feeds.append(
+                {
+                    "id": feed_id,
+                    "url": url,
+                    "title": title,
+                    "subtitle": subtitle,
+                    "interval": default_interval,
+                    "last_entry_id": "",
+                    "subscribers": [],
+                    "added_at": datetime.now(timezone.utc).isoformat(),
+                    "last_check": None,
+                    "failed_count": 0,
+                }
+            )
             await self._save()
         return True, feed_id
 
@@ -135,23 +139,25 @@ class SubscriptionStore:
 
     # ── 订阅者管理 ──
 
-    async def add_subscriber(self, feed_url: str,
-                             unified_origin: str,
-                             platform: str,
-                             sender_name: str) -> bool:
+    async def add_subscriber(
+        self, feed_url: str, unified_origin: str, platform: str, sender_name: str
+    ) -> bool:
         async with self._lock:
             for feed in self._data["feeds"]:
                 if feed["url"] == feed_url:
                     existing = [
-                        s for s in feed.get("subscribers", [])
+                        s
+                        for s in feed.get("subscribers", [])
                         if s["unified_origin"] == unified_origin
                     ]
                     if not existing:
-                        feed.setdefault("subscribers", []).append({
-                            "unified_origin": unified_origin,
-                            "platform": platform,
-                            "sender_name": sender_name,
-                        })
+                        feed.setdefault("subscribers", []).append(
+                            {
+                                "unified_origin": unified_origin,
+                                "platform": platform,
+                                "sender_name": sender_name,
+                            }
+                        )
                         await self._save()
                         return True
                     return False
@@ -166,7 +172,13 @@ class SubscriptionStore:
 
 # ── 插件主类 ──────────────────────────────────────────────
 
-@register("astrbot_plugin_rss", "ownisjiang", "RSS 订阅插件 - 订阅你喜欢的博客和新闻源", "1.0.0")
+
+@register(
+    "astrbot_plugin_rss",
+    "ownisjiang",
+    "RSS 订阅插件 - 订阅你喜欢的博客和新闻源",
+    "1.0.0",
+)
 class RssPlugin(Star):
     def __init__(self, context: Context, config: dict = None):
         super().__init__(context)
@@ -177,7 +189,11 @@ class RssPlugin(Star):
         # 持久化数据放在 AstrBot data 目录下
         data_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "..", "..", "..", "data", "rss_plugin"
+            "..",
+            "..",
+            "..",
+            "data",
+            "rss_plugin",
         )
         self.store = SubscriptionStore(data_dir)
 
@@ -205,10 +221,7 @@ class RssPlugin(Star):
     async def rss(self, event: AstrMessageEvent, action: str = None):
         """RSS 订阅管理主命令"""
         if not action:
-            yield event.plain_result(
-                "📡 RSS 订阅管理器\n"
-                "输入 /rss help 查看帮助"
-            )
+            yield event.plain_result("📡 RSS 订阅管理器\n输入 /rss help 查看帮助")
             return
 
         action = action.lower()
@@ -221,8 +234,7 @@ class RssPlugin(Star):
             parts = event.message_str.strip().split(maxsplit=2)
             if len(parts) < 3:
                 yield event.plain_result(
-                    "❌ 用法: /rss add <url>\n"
-                    "例如: /rss add https://example.com/rss"
+                    "❌ 用法: /rss add <url>\n例如: /rss add https://example.com/rss"
                 )
                 return
             url = parts[2].strip("\"'")  # 去除可能的引号
@@ -233,8 +245,7 @@ class RssPlugin(Star):
             parts = event.message_str.strip().split(maxsplit=2)
             if len(parts) < 3:
                 yield event.plain_result(
-                    "❌ 用法: /rss remove <id>\n"
-                    "例如: /rss remove abc12345"
+                    "❌ 用法: /rss remove <id>\n例如: /rss remove abc12345"
                 )
                 return
             feed_id = parts[2]
@@ -268,10 +279,14 @@ class RssPlugin(Star):
                     f"✅ 已更新检查间隔为 {interval} 分钟 (ID: {feed_id})"
                 )
             else:
-                yield event.plain_result(f"❌ 未找到 ID 为 {feed_id} 的订阅，使用 /rss list 查看")
+                yield event.plain_result(
+                    f"❌ 未找到 ID 为 {feed_id} 的订阅，使用 /rss list 查看"
+                )
 
         else:
-            yield event.plain_result(f"❌ 未知操作: {action}\n输入 /rss help 查看可用命令")
+            yield event.plain_result(
+                f"❌ 未知操作: {action}\n输入 /rss help 查看可用命令"
+            )
 
     # ── 子命令实现 ──
 
@@ -330,8 +345,7 @@ class RssPlugin(Star):
             yield event.plain_result(f"✅ 已取消订阅 (ID: {feed_id})")
         else:
             yield event.plain_result(
-                f"❌ 未找到 ID 为 {feed_id} 的订阅\n"
-                f"使用 /rss list 查看所有订阅"
+                f"❌ 未找到 ID 为 {feed_id} 的订阅\n使用 /rss list 查看所有订阅"
             )
 
     async def _cmd_list(self, event: AstrMessageEvent):
@@ -340,8 +354,6 @@ class RssPlugin(Star):
             yield event.plain_result("📭 暂无订阅，使用 /rss add <url> 添加")
             return
 
-        # 只显示当前会话相关的订阅
-        my_origin = event.unified_msg_origin
         lines = ["📡 RSS 订阅列表:\n"]
         for feed in feeds:
             sub_count = len(feed.get("subscribers", []))
@@ -469,17 +481,19 @@ class RssPlugin(Star):
             if entry_id in seen:
                 continue
 
-            new_entries.append({
-                "id": entry_id,
-                "title": entry.get("title", "无标题"),
-                "link": entry.get("link", ""),
-                "summary": self._clean_html(
-                    entry.get("summary") or entry.get("description") or ""
-                )[:300],
-                "published": entry.get("published", ""),
-                "author": entry.get("author", ""),
-                "media_content": entry.get("media_content", []),
-            })
+            new_entries.append(
+                {
+                    "id": entry_id,
+                    "title": entry.get("title", "无标题"),
+                    "link": entry.get("link", ""),
+                    "summary": self._clean_html(
+                        entry.get("summary") or entry.get("description") or ""
+                    )[:300],
+                    "published": entry.get("published", ""),
+                    "author": entry.get("author", ""),
+                    "media_content": entry.get("media_content", []),
+                }
+            )
             if len(new_entries) >= max_push:
                 break
 
@@ -490,9 +504,10 @@ class RssPlugin(Star):
         """通用 HTTP GET 请求"""
         try:
             async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-                resp = await client.get(url, headers={
-                    "User-Agent": "Mozilla/5.0 (compatible; AstrBotRSS/1.0)"
-                })
+                resp = await client.get(
+                    url,
+                    headers={"User-Agent": "Mozilla/5.0 (compatible; AstrBotRSS/1.0)"},
+                )
                 resp.raise_for_status()
                 return resp.text
         except httpx.TimeoutException:
