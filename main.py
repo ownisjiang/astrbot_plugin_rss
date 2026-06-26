@@ -161,7 +161,7 @@ class SubscriptionStore:
 
 # ── 插件主类 ──────────────────────────────────────────────
 
-@register("astrbot_plugin_rss", "YourName", "RSS 订阅插件 - 订阅你喜欢的博客和新闻源", "1.0.0")
+@register("astrbot_plugin_rss", "ownisjiang", "RSS 订阅插件 - 订阅你喜欢的博客和新闻源", "1.0.0")
 class RssPlugin(Star):
     def __init__(self, context: Context, config: dict = None):
         super().__init__(context)

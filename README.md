@@ -35,7 +35,7 @@
 cd data/plugins/
 
 # 克隆本仓库
-git clone https://github.com/YourName/astrbot_plugin_rss.git
+git clone https://github.com/ownisjiang/astrbot_plugin_rss.git
 
 # 安装依赖
 pip install feedparser httpx
